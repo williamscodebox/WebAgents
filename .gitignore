@@ -2,3 +2,6 @@ requirements.txt
 .venv/
 test.txt
 .idea/
+committee.md
+idea.txt
+idea.md
