@@ -100,5 +100,10 @@ async def visualizeCourses(result, screenshot, target_url, instructions, base_ur
         display(Markdown("### Website Screenshot:"))
         display(HTML(img_html))
 
-        return img_html
+        return f"""
+        <h2>Scraped Course Data</h2>
+        {table_html}
+        <h2>Website Screenshot</h2>
+        {img_html}
+        """
 
