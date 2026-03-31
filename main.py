@@ -143,12 +143,19 @@ async def process_with_llm(html, instructions, truncate=False):
     )
     return completion.choices[0].message.parsed
 
+# def clean_html(html):
+#     soup = BeautifulSoup(html, "html.parser")
+#     for tag in soup(["script", "style", "meta", "noscript"]):
+#         tag.decompose()
+#     text = soup.get_text(separator=" ", strip=True)
+#     return text
+
 def clean_html(html):
     soup = BeautifulSoup(html, "html.parser")
     for tag in soup(["script", "style", "meta", "noscript"]):
         tag.decompose()
-    text = soup.get_text(separator=" ", strip=True)
-    return text
+    return str(soup)  # keep tags
+
 
 
 
@@ -159,8 +166,8 @@ async def webscraper(target_url, instructions):
         print("Extracting HTML Content \n")
         html_content = await scraper.scrape_content(target_url)
 
-        # CLEAN + TRUNCATE HTML HERE
-        html_content = clean_html(html_content)[:20000]
+        # # CLEAN + TRUNCATE HTML HERE
+        # html_content = clean_html(html_content)[:100000]
 
         print("Taking Screenshot \n")
         screenshot = await scraper.screenshot_buffer()
