@@ -3,7 +3,7 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 from openai import OpenAI
-from multion.client import MultiOn
+# from multion.client import MultiOn
 import base64
 from io import BytesIO
 from PIL import Image
@@ -37,10 +37,10 @@ def get_multi_on_api_key():
     multi_on_api_key = os.getenv("MULTION_API_KEY")
     return multi_on_api_key
 
-
-def get_multi_on_client():
-    multi_on_api_key = get_multi_on_api_key()
-    return MultiOn(api_key=multi_on_api_key)
+#
+# def get_multi_on_client():
+#     multi_on_api_key = get_multi_on_api_key()
+#     return MultiOn(api_key=multi_on_api_key)
 
 
 # Params
@@ -99,3 +99,6 @@ async def visualizeCourses(result, screenshot, target_url, instructions, base_ur
         )
         display(Markdown("### Website Screenshot:"))
         display(HTML(img_html))
+
+        return img_html
+
