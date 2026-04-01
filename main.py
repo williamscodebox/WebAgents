@@ -143,6 +143,31 @@ async def process_with_llm(html, instructions, truncate=False):
     )
     return completion.choices[0].message.parsed
 
+async def process_with_llm_two(html, instructions, truncate=False):
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o-mini-2024-07-18",
+        messages=[
+            ChatCompletionSystemMessageParam(
+                role="system",
+                content=f"""
+                You are an expert web scraping agent. Your task is to extract structured
+                course information from the provided HTML. Follow these instructions:
+
+                {instructions}
+
+                Return ONLY valid JSON matching the DeeplearningCourseList schema.
+                                """
+            ),
+            ChatCompletionUserMessageParam(
+                role="user",
+                content=html[:150000]
+            )
+        ],
+        temperature=0.1,
+        response_format=DeeplearningCourseList,
+    )
+    return completion.choices[0].message.parsed
+
 # def clean_html(html):
 #     soup = BeautifulSoup(html, "html.parser")
 #     for tag in soup(["script", "style", "meta", "noscript"]):
@@ -155,6 +180,10 @@ def clean_html(html):
     for tag in soup(["script", "style", "meta", "noscript"]):
         tag.decompose()
     return str(soup)  # keep tags
+
+
+def chunk_text(text, chunk_size=15000):
+    return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
 
 
 
@@ -174,8 +203,29 @@ async def webscraper(target_url, instructions):
         # Process content
 
         print("Processing..")
-        result: DeeplearningCourseList = await process_with_llm(html_content, instructions, False)
+
+        # 🔥 NEW: chunk the HTML before sending to LLM
+        chunks = chunk_text(html_content, chunk_size=15000)
+
+        all_courses = []
+
+        for chunk in chunks:
+            partial: DeeplearningCourseList = await process_with_llm(chunk, instructions)
+            all_courses.extend(partial.courses)
+
+        # 🔥 NEW: dedupe by courseURL
+        unique = {c.courseURL: c for c in all_courses}
+        merged_courses = list(unique.values())
+
+
+
+        # Wrap back into your Pydantic model
+        result = DeeplearningCourseList(courses=merged_courses)
+
         print("\nGenerated Structured Response")
+
+        # result: DeeplearningCourseList = await process_with_llm(html_content, instructions, False)
+        # print("\nGenerated Structured Response")
     except Exception as e:
         print(f"❌ Error: {str(e)}")
     finally:
@@ -185,15 +235,81 @@ async def webscraper(target_url, instructions):
 async def main():
     target_url = "https://www.deeplearning.ai/courses"
     base_url = "https://deeplearning.ai"
+    base_url2 = "https://learn.deeplearning.ai/"
 
-    instructions = """
-        Get all the courses
+    ## USE CASE #1 -> GET ALL COURSES
+
+    # instructions = """
+    #     Get all the courses
+    # """
+    #
+    # result, screenshot = await webscraper(target_url, instructions)
+    #
+    # html = await visualizeCourses(
+    #     result=result,
+    #     screenshot=screenshot,
+    #     target_url=target_url,
+    #     instructions=instructions,
+    #     base_url=base_url
+    # )
+
+    ## USE CASE #2 -> GET THREE COURSES BASED ON SUBJECT
+
+    # subject = "Retrieval Augmented Generation (RAG) "
+    #
+    # instructions = f"""
+    # Read the description of the courses and only
+    # provide the three courses that are about {subject}.
+    # Make sure that we don't have any other
+    # courses in the output
+    # """
+    # result, screenshot = await webscraper(target_url, instructions)
+    #
+    # html = await visualizeCourses(
+    #     result=result,
+    #     screenshot=screenshot,
+    #     target_url=target_url,
+    #     instructions=instructions,
+    #     base_url=base_url
+    # )
+    # # # CLEAN + TRUNCATE HTML HERE
+    # html_content = clean_html(html)[:100000]
+    # newest = await process_with_llm(html_content, instructions)
+    #
+    #
+    # html = await visualizeCourses(
+    #     result=newest,
+    #     screenshot=screenshot,
+    #     target_url=target_url,
+    #     instructions=instructions,
+    #     base_url=""
+    # )
+
+    ## USE CASE #3 -> GET THE SUMMARY OF THE TOP COURSE
+
+    subject = "Retrieval Augmented Generation (RAG) "
+
+    instructions = f"""
+    Can you get the summary of the top course on
+    {subject} provide the learnings from it
     """
-
     result, screenshot = await webscraper(target_url, instructions)
 
     html = await visualizeCourses(
         result=result,
+        screenshot=screenshot,
+        target_url=target_url,
+        instructions=instructions,
+        base_url=""
+    )
+
+    # # CLEAN + TRUNCATE HTML HERE
+    html_content = clean_html(html)[:100000]
+    newest = await process_with_llm(html_content, instructions)
+
+
+    html = await visualizeCourses(
+        result=newest,
         screenshot=screenshot,
         target_url=target_url,
         instructions=instructions,
