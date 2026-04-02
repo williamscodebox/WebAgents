@@ -202,7 +202,7 @@ Return a JSON object matching BrowserAction.
 """
 
     return client.chat.completions.create(
-        model="microsoft/Phi-4-mini-instruct",
+        model="Qwen/Qwen2.5-7B-Instruct",
         response_model=BrowserAction,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.2,
