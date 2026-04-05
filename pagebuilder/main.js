@@ -12,7 +12,7 @@ const app = new PIXI.Application({
 // -----------------------------
 // TEXTURES
 // -----------------------------
-const emberTexture = PIXI.Texture.from("ember2.png");
+const emberTexture = PIXI.Texture.from("ember4.png");
 const phoenixTexture = PIXI.Texture.from("phoenix.png");
 
 // -----------------------------
@@ -128,7 +128,7 @@ gsap.to(flightObj, {
 
 const tailPoints = [];
 for (let i = 0; i < 40; i++) {
-  tailPoints.push(new PIXI.Point(400, -20));
+  tailPoints.push(new PIXI.Point(0, 0));
 }
 
 const tail = new PIXI.SimpleRope(emberTexture, tailPoints);
@@ -163,8 +163,8 @@ for (let i = 1; i < tailPoints.length; i++) {
   const prev = tailPoints[i - 1];
   const p = tailPoints[i];
 
-  p.x += (prev.x - p.x) * 0.40;
-  p.y += (prev.y - p.y) * 0.40;
+  p.x += (prev.x - p.x) * 0.45;
+  p.y += (prev.y - p.y) * 0.20;
 }
 
 
